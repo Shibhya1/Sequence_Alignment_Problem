@@ -1,3 +1,37 @@
+delta = 30  # Gap cost
+
+alpha = { # Substitution cost matrix
+    'A': {'A': 0,   'C': 110, 'G': 48,  'T': 94},
+    'C': {'A': 110, 'C': 0,   'G': 118, 'T': 48},
+    'G': {'A': 48,  'C': 118, 'G': 0,   'T': 110},
+    'T': {'A': 94,  'C': 48,  'G': 110, 'T': 0}
+}
+
+def dp_bottom_row(S, T):
+    """
+    Compute the last row of the DP table for sequences S and T.
+    Uses only O(len(T)) space.
+    """
+    m = len(S)
+    n = len(T)
+
+    prev = [j * delta for j in range(n + 1)]
+
+    for i in range(1, m + 1):
+        curr = [0] * (n + 1)
+        curr[0] = i * delta
+
+        for j in range(1, n + 1):
+            cost_sub = prev[j - 1] + alpha[S[i - 1]][T[j - 1]]
+            cost_del = prev[j] + delta
+            cost_ins = curr[j - 1] + delta
+
+            curr[j] = min(cost_sub, cost_del, cost_ins)
+
+        prev = curr
+
+    return prev
+
 def generate_strings(filename):
     """
     Read the inputs from a file with the following format:
@@ -49,3 +83,6 @@ if __name__ == "__main__":
 
     print("\nT:", T)
     print("Size:", len(T))
+
+    last_row = dp_bottom_row(S, T)
+    print("Last row DP:", last_row)
