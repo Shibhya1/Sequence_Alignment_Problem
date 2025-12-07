@@ -115,33 +115,32 @@ def top_down(X, Y, dp):
     i = len(X)
     j = len(Y)
 
-    while i > 0 or j > 0:
-        # Case 1: diagonal move (match or mismatch)
-        if (i > 0 and j > 0) and (dp[i][j] == dp[i - 1][j - 1] + alpha[X[i - 1]][Y[j - 1]]):
-            alignment_x.insert(0, X[i - 1])
-            alignment_y.insert(0, Y[j - 1])
+    while i > 0 and j > 0:
+        if dp[i][j] == dp[i - 1][j - 1] + alpha[X[i - 1]][Y[j - 1]]:
+            alignment_x.append(X[i - 1])
+            alignment_y.append(Y[j - 1])
             i -= 1
             j -= 1
-
-        # Case 2: gap in Y
-        elif i > 0 and dp[i][j] == dp[i - 1][j] + delta:
-            alignment_x.insert(0, X[i - 1])
-            alignment_y.insert(0, "_")
+        elif dp[i][j] == dp[i - 1][j] + delta:
+            alignment_x.append(X[i - 1])
+            alignment_y.append("_")
             i -= 1
-
-        # Case 3: gap in X
-        elif j > 0 and dp[i][j] == dp[i][j - 1] + delta:
-            alignment_x.insert(0, "_")
-            alignment_y.insert(0, Y[j - 1])
-            j -= 1
-
-        # Rare fallback case (when multiple optimal paths exist)
         else:
-            alignment_x.insert(0, X[i - 1])
-            alignment_y.insert(0, "_")
-            i -= 1
+            alignment_x.append("_")
+            alignment_y.append(Y[j - 1])
+            j -= 1
 
-    return "".join(alignment_x), "".join(alignment_y)
+    while i > 0:
+        alignment_x.append(X[i - 1])
+        alignment_y.append("_")
+        i -= 1
+
+    while j > 0:
+        alignment_x.append("_")
+        alignment_y.append(Y[j - 1])
+        j -= 1
+
+    return "".join(alignment_x[::-1]), "".join(alignment_y[::-1])
 
 # ---------------------------------------------------------------------------
 # Basic DP Wrapper
@@ -149,11 +148,14 @@ def top_down(X, Y, dp):
 # ---------------------------------------------------------------------------
 def basic_dp(X, Y):
     dp_table = bottom_up(X, Y)
+    process = psutil.Process()
+
+    current_mem = process.memory_info().rss / 1024
+
     cost = dp_table[len(X)][len(Y)]
     alignment_x, alignment_y = top_down(X, Y, dp_table)
 
-    return cost, alignment_x, alignment_y
-
+    return cost, alignment_x, alignment_y, current_mem
 
 # ---------------------------------------------------------------------------
 # Memory and Time Measurement
@@ -166,9 +168,9 @@ def process_memory():
 
 
 def time_wrapper(algo):
-    start_time = time.time()
+    start_time = time.perf_counter()
     result = algo()
-    end_time = time.time()
+    end_time = time.perf_counter()
     time_taken = (end_time - start_time) * 1000
     return time_taken, result
 
@@ -189,9 +191,9 @@ def main():
 
     # Measure memory + time around alignment
     mem_before = process_memory()
-    time_taken, (cost, alignment_x, alignment_y) = time_wrapper(lambda: basic_dp(X, Y))
-    mem_after = process_memory()
-    memory_used = max(0, mem_after - mem_before)
+    time_taken, (cost, alignment_x, alignment_y, memory_used) = time_wrapper(lambda: basic_dp(X, Y))
+    # mem_after = process_memory()
+    # memory_used = max(0, mem_after - mem_before)
 
     # Write results to output file (required format)
     with open(output_file, "w") as f:

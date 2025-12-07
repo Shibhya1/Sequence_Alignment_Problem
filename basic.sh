@@ -1,5 +1,2 @@
-python basic.py "SampleTestCases/input1.txt" "output1.txt"
-python basic.py "SampleTestCases/input2.txt" "output2.txt"
-python basic.py "SampleTestCases/input3.txt" "output3.txt"
-python basic.py "SampleTestCases/input4.txt" "output4.txt"
-python basic.py "SampleTestCases/input5.txt" "output5.txt"
+#!/bin/bash
+python basic.py "$1" "$2"
